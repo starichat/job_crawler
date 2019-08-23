@@ -44,22 +44,28 @@ func GetarticesForCSDN(url string) {
 	info := &model.ArticleInfo{}
 	req, err := http.NewRequest("GET", url, nil)
 	global.CheckErr(err)
-	req.Header.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36")
+	req.Header.Set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36")
 	client := &http.Client{}
 	resp, _ := client.Do(req)
 	fmt.Println(resp.Status)
 	global.CheckErr(err)
 	doc, err := goquery.NewDocumentFromResponse(resp)
 	global.CheckErr(err)
-	// doc.Find(".my_tab_page_con .tab_page_list dt").Each(func(i int, s *goquery.Selection) {
-	// 	info.Name = s.Find("h3").Text()
-	// 	info.Url, _ = s.Find("h3").Find("a").Attr("href")
-	// 	fmt.Println(strings.TrimSpace(info.Name))
-	// 	dao.InsertData(info)
-
-	// })
-	doc.Find(".container .clearfix .pt0 .article-list .article-item-box .csdn-tracking-statistics .article-item-box .csdn-tracking-statistics").Each(func(i int, s *goquery.Selection) {
+	fmt.Println(doc)
+	doc.Find("main .article-list .article-item-box").Each(func(i int, s *goquery.Selection) {
 		info.Name = s.Find("h4").Find("a").Text()
-		fmt.Println(info.Name)
+		span := s.Find("h4").Find("a").Find("span").Text()
+		info.Url, _ = s.Find("h4").Find("a").Attr("href")
+		// fmt.Println(strings.TrimSpace(info.Name))
+		//fmt.Println(info.Url)
+		// fmt.Println(span)
+		// 判断文章辩题是否有<span>的内容，若有则去点
+		if strings.HasPrefix(strings.TrimSpace(info.Name), span) {
+			info.Name = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(info.Name), span))
+		}
+		dao.InsertData(info)
+
 	})
+
 }
+
